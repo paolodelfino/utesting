@@ -100,11 +100,21 @@ class Test<T extends string> {
         const dep = this._set.get(label as T);
 
         if (!dep.ran) {
-          this._mark(true);
+          const hierarchy: string[] = [dep.label];
+          (function recursive_detect(test: Test<T>) {
+            if (!test._deps) return;
+
+            for (const label of test._deps) {
+              if (!test._set.get(label).ran) {
+                hierarchy.push(label);
+              }
+            }
+          })(dep);
 
           loading.stop();
+
           throw new Error(
-            `cannot run "${this.label}" before its dependency "${dep.label}"`
+            `cannot run "${this.label}" before its dependency "${dep.label}" (error hierarchy found: ${hierarchy})`
           );
         }
 
