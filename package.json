@@ -1,7 +1,7 @@
 {
-  "name": "{}",
-  "version": "{}",
-  "description": "{}",
+  "name": "utesting",
+  "version": "0.1.0",
+  "description": "",
   "main": "dist/index.js",
   "module": "dist/index.mjs",
   "types": "dist/index.d.ts",
@@ -23,10 +23,10 @@
   },
   "repository": {
     "type": "git",
-    "url": "git@github.com:paolodelfino/{}.git"
+    "url": "git@github.com:paolodelfino/utesting.git"
   },
   "bugs": {
-    "url": "https://github.com/paolodelfino/{}/issues"
+    "url": "https://github.com/paolodelfino/utesting/issues"
   },
   "files": [
     "dist"
@@ -42,5 +42,9 @@
     "tsup": "^8.0.1",
     "typedoc": "^0.25.4",
     "typescript": "^5.3.2"
+  },
+  "dependencies": {
+    "chalk": "^5.3.0",
+    "ora": "^7.0.1"
   }
 }
