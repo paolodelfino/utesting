@@ -65,11 +65,11 @@ export class UTesting {
       }
     }
 
-    const sw_start = Date.now();
+    const sw_start = process.hrtime.bigint();
     await test.cb().catch(() => {
       test.failed = true;
     });
-    const elapsed = Date.now() - sw_start;
+    const elapsed = Number(process.hrtime.bigint() - sw_start) / 1e6;
     test.ran = true;
 
     loading.stop();
