@@ -44,6 +44,7 @@ export class UTesting {
       for (const dep of test.dependencies) {
         if (this._tests[dep].failed) {
           test.failed = true;
+          test.ran = true;
           loading.stop();
           old_console_log(
             `${chalk.bgHex("#FFA500").bold(`  ${label}  `)} ${chalk.dim(
@@ -55,6 +56,7 @@ export class UTesting {
 
         if (!this._tests[dep].ran) {
           test.failed = true;
+          test.ran = true;
           loading.stop();
           throw new Error(
             `cannot run "${label}" before its dependency "${dep}"`
@@ -68,6 +70,7 @@ export class UTesting {
       test.failed = true;
     });
     const elapsed = Date.now() - sw_start;
+    test.ran = true;
 
     loading.stop();
     console.log = old_console_log;
