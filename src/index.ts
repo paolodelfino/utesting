@@ -63,6 +63,7 @@ class Test<T extends string> {
 
   private _callback;
   private _after;
+  private _before;
   private _deps;
 
   label;
@@ -70,11 +71,12 @@ class Test<T extends string> {
   failed = false;
 
   constructor({
-    label,
+    set,
     callback,
     after,
+    before,
     deps,
-    set,
+    label,
   }: Test_Constructor<T> & {
     set: Test_Set<T>;
   }) {
@@ -82,22 +84,23 @@ class Test<T extends string> {
 
     this._callback = callback;
     this._after = after;
+    this._before = before;
     this._deps = deps;
 
     this.label = label;
   }
 
   async run() {
-    const loading = ora(chalk.bold(this.label));
+    const spinner = ora(chalk.bold(this.label));
 
     const old_console_log = console.log;
     console.log = (...data: any[]) => {
-      loading.clear();
-      loading.frame();
+      spinner.clear();
+      spinner.frame();
       old_console_log(...data);
     };
 
-    loading.start();
+    spinner.start();
 
     if (this._deps) {
       for (const label of this._deps) {
@@ -115,7 +118,7 @@ class Test<T extends string> {
             }
           })(dep);
 
-          loading.stop();
+          spinner.stop();
 
           throw new Error(
             `cannot run "${this.label}" before its dependency "${dep.label}" (error hierarchy found: ${hierarchy})`
@@ -125,7 +128,7 @@ class Test<T extends string> {
         if (dep.failed) {
           this._mark(true);
 
-          loading.stop();
+          spinner.stop();
           old_console_log(
             `${chalk.bgHex("#FFA500").bold(`  ${this.label}  `)} ${chalk.dim(
               "Skipped because a dependency has failed"
@@ -136,45 +139,46 @@ class Test<T extends string> {
       }
     }
 
-    const sw_start = process.hrtime.bigint();
-
-    await this._callback()
-      .then(() => {
-        this._mark(false);
-      })
-      .catch((err) => {
-        this._mark(true);
-        console.log(err);
-      });
-
-    const elapsed_ms = Number(process.hrtime.bigint() - sw_start) / 1e6;
-
-    if (!this.failed) {
-      await this._after?.()
+    async function run_and_result(
+      test: Test<T>,
+      callback?: Test_Constructor<T>["callback"]
+    ) {
+      await callback?.()
         .then(() => {
-          this._mark(false);
+          test._mark(false);
         })
         .catch((err) => {
-          this._mark(true);
+          test._mark(true);
           console.log(err);
         });
+      return !test.failed;
     }
 
-    loading.stop();
+    let elapsed_ms = 0;
+    const succeed =
+      (await run_and_result(this, this._before)) &&
+      (await run_and_result(this, async () => {
+        const sw_start = process.hrtime.bigint();
+        await this._callback();
+        elapsed_ms = Number(process.hrtime.bigint() - sw_start) / 1e6;
+      })) &&
+      (await run_and_result(this, this._after));
+
+    spinner.stop();
     console.log = old_console_log;
 
-    if (this.failed) {
-      console.log(
-        `${chalk.bgHex("#FF0000").bold(`  ${this.label}  `)} ${chalk.dim(
-          `Task has failed`
-        )}`
-      );
-    } else {
+    if (succeed) {
       console.log(
         `${chalk.bgHex("#008000").bold(`  ${this.label}  `)} ${chalk.dim(
           elapsed_ms >= 1000
             ? `${(elapsed_ms / 1000).toFixed(2)}s`
             : `${elapsed_ms}ms`
+        )}`
+      );
+    } else {
+      console.log(
+        `${chalk.bgHex("#FF0000").bold(`  ${this.label}  `)} ${chalk.dim(
+          `Task has failed`
         )}`
       );
     }

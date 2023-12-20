@@ -47,7 +47,31 @@ async function main() {
     const tests = new Test_Set<"test1" | "test2">({
       test1: {
         async callback() {
-          throw new Error("Error: Hello from test1");
+          throw new Error("Hello from test1");
+        },
+        async after() {
+          assert(0, "Should not run");
+        },
+      },
+      test2: {
+        async callback() {
+          assert(0, "Should not run");
+        },
+        deps: ["test1"],
+      },
+    });
+
+    await tests.run();
+  }
+
+  {
+    const tests = new Test_Set<"test1" | "test2">({
+      test1: {
+        async before() {
+          throw new Error("Hello from test1's before");
+        },
+        async callback() {
+          assert(0, "Should not run");
         },
         async after() {
           assert(0, "Should not run");
@@ -68,7 +92,7 @@ async function main() {
     const tests = new Test_Set<"test1" | "test2">({
       test1: {
         async callback() {
-          throw new Error("Error: Hello from test1");
+          throw new Error("Hello from test1");
         },
         async after() {
           assert(0, "Should not run");
