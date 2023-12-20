@@ -41,6 +41,10 @@ async function main() {
 
     assert.strictEqual(tests.keys[0], "foo");
     assert.strictEqual(tests.keys[1], "foo2");
+
+    assert.isTrue(tests.has("foo"));
+    assert.isTrue(tests.has("foo2"));
+    assert.isFalse(tests.has("foo3"));
   }
 
   {

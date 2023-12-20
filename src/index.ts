@@ -16,16 +16,21 @@ export class Test_Set<T extends string> {
     }
   }
 
-  get(label: T) {
-    return this._data[label];
-  }
-
   get values() {
     return Object.values<Test<T>>(this._data);
   }
 
   get keys(): T[] {
     return Object.keys(this._data) as T[];
+  }
+
+  get(label: T) {
+    return this._data[label];
+  }
+
+  has(label: string) {
+    // @ts-ignore
+    return !!this._data[label];
   }
 
   async run(): Promise<void>;
