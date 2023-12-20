@@ -1,5 +1,5 @@
 # UTesting
 
 ```bash
-pnpm add -D utesting
+pnpm add -D putesting
 ```
