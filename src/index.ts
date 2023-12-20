@@ -1,105 +1,159 @@
 import chalk from "chalk";
 import ora from "ora";
-import { Options, Test } from "./types";
+import { Test_Constructor } from "./types";
 
-export class UTesting {
-  private _tests: Record<string, Test> = {};
+export class Test_Set<T extends string> {
+  // @ts-ignore
+  private _data!: Record<T, Test<T>> = {};
 
-  get length() {
-    return Object.keys(this._tests).length;
+  constructor(tests: Record<T, Omit<Test_Constructor<T>, "label">>) {
+    for (const label in tests) {
+      this._data[label] = new Test({
+        ...tests[label],
+        label,
+        set: this,
+      });
+    }
   }
 
-  get names() {
-    return Object.keys(this._tests);
+  get(label: T) {
+    return this._data[label];
   }
 
-  add(label: string, cb: Test["cb"], options?: Partial<Options>) {
-    if (options?.dependencies) {
-      for (const dep of options.dependencies) {
-        if (!this._tests[dep]) {
-          throw new Error(
-            `"${label}" cannot depend on "${dep}" because "${label}" runs before "${dep}"`
-          );
-        }
+  async run(): Promise<void>;
+  async run(label: T): Promise<void>;
+  async run(
+    label: string,
+    test: Omit<Test_Constructor<T>, "label">
+  ): Promise<void>;
+  async run(
+    label?: T | string,
+    test?: Omit<Test_Constructor<T>, "label">
+  ): Promise<void> {
+    if (!label && !test) {
+      for (const test of Object.values<Test<T>>(this._data)) {
+        await test.run();
       }
+      return;
     }
 
-    this._tests[label] = {
-      ...options,
-      cb,
-      ran: false,
-      failed: false,
-    };
+    if (test) {
+      await new Test({
+        ...test,
+        label: label!,
+        set: this,
+      }).run();
+      return;
+    }
+
+    await this.get(label as T).run();
+  }
+}
+
+class Test<T extends string> {
+  private _set;
+
+  private _callback;
+  private _after;
+  private _deps;
+
+  label;
+  ran = false;
+  failed = false;
+
+  constructor({
+    label,
+    callback,
+    after,
+    deps,
+    set,
+  }: Test_Constructor<T> & {
+    set: Test_Set<T>;
+  }) {
+    this._set = set;
+
+    this._callback = callback;
+    this._after = after;
+    this._deps = deps;
+
+    this.label = label;
   }
 
-  get(label: string): Test | undefined {
-    return this._tests[label];
-  }
+  async run() {
+    const loading = ora(chalk.bold(this.label));
 
-  private async _run(label: string) {
-    const loading = ora(chalk.bold(label));
     const old_console_log = console.log;
     console.log = (...data: any[]) => {
       loading.clear();
       loading.frame();
       old_console_log(...data);
     };
+
     loading.start();
 
-    const test = this._tests[label];
+    if (this._deps) {
+      for (const label of this._deps) {
+        const dep = this._set.get(label as T);
 
-    if (test.dependencies) {
-      for (const dep of test.dependencies) {
-        if (this._tests[dep].failed) {
-          test.failed = true;
-          test.ran = true;
+        if (!dep.ran) {
+          this._mark(true);
+
+          loading.stop();
+          throw new Error(
+            `cannot run "${this.label}" before its dependency "${dep.label}"`
+          );
+        }
+
+        if (dep.failed) {
+          this._mark(true);
+
           loading.stop();
           old_console_log(
-            `${chalk.bgHex("#FFA500").bold(`  ${label}  `)} ${chalk.dim(
+            `${chalk.bgHex("#FFA500").bold(`  ${this.label}  `)} ${chalk.dim(
               "Skipped because a dependency has failed"
             )}`
           );
           return;
         }
-
-        if (!this._tests[dep].ran) {
-          test.failed = true;
-          test.ran = true;
-          loading.stop();
-          throw new Error(
-            `cannot run "${label}" before its dependency "${dep}"`
-          );
-        }
       }
     }
 
     const sw_start = process.hrtime.bigint();
-    await test.cb().catch((err) => {
-      test.failed = true;
-      console.log(err);
-    });
-    const elapsed_ms = Number(process.hrtime.bigint() - sw_start) / 1e6;
-    test.ran = true;
 
-    if (!test.failed) {
-      await test.after?.().catch((err) => {
-        test.failed = true;
+    await this._callback()
+      .then(() => {
+        this._mark(false);
+      })
+      .catch((err) => {
+        this._mark(true);
         console.log(err);
       });
+
+    const elapsed_ms = Number(process.hrtime.bigint() - sw_start) / 1e6;
+
+    if (!this.failed) {
+      await this._after?.()
+        .then(() => {
+          this._mark(false);
+        })
+        .catch((err) => {
+          this._mark(true);
+          console.log(err);
+        });
     }
 
     loading.stop();
     console.log = old_console_log;
 
-    if (test.failed) {
+    if (this.failed) {
       console.log(
-        `${chalk.bgHex("#FF0000").bold(`  ${label}  `)} ${chalk.dim(
+        `${chalk.bgHex("#FF0000").bold(`  ${this.label}  `)} ${chalk.dim(
           `Task has failed`
         )}`
       );
     } else {
       console.log(
-        `${chalk.bgHex("#008000").bold(`  ${label}  `)} ${chalk.dim(
+        `${chalk.bgHex("#008000").bold(`  ${this.label}  `)} ${chalk.dim(
           elapsed_ms >= 1000
             ? `${(elapsed_ms / 1000).toFixed(2)}s`
             : `${elapsed_ms}ms`
@@ -108,16 +162,8 @@ export class UTesting {
     }
   }
 
-  run(): Promise<void>;
-  run(label: string): Promise<void>;
-  async run(label?: string): Promise<void> {
-    if (label) {
-      await this._run(label);
-      return;
-    }
-
-    for (const key of Object.keys(this._tests)) {
-      await this._run(key);
-    }
+  private _mark(failed: boolean) {
+    this.failed = failed;
+    this.ran = true;
   }
 }

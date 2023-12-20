@@ -1,10 +1,6 @@
-export interface Options {
-  dependencies: string[];
-  after: () => Promise<void>;
+export interface Test_Constructor<T extends string> {
+  label: string;
+  callback: () => Promise<void>;
+  after?: () => Promise<void>;
+  deps?: T[];
 }
-
-export type Test = Partial<Options> & {
-  cb: () => Promise<void>;
-  ran: boolean;
-  failed: boolean;
-};
