@@ -20,6 +20,10 @@ export class Test_Set<T extends string> {
     return this._data[label];
   }
 
+  get all() {
+    return Object.values<Test<T>>(this._data);
+  }
+
   async run(): Promise<void>;
   async run(label: T): Promise<void>;
   async run(
@@ -31,7 +35,7 @@ export class Test_Set<T extends string> {
     test?: Omit<Test_Constructor<T>, "label">
   ): Promise<void> {
     if (!label && !test) {
-      for (const test of Object.values<Test<T>>(this._data)) {
+      for (const test of this.all) {
         await test.run();
       }
       return;
