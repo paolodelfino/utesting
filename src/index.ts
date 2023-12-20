@@ -28,7 +28,7 @@ export class Test_Set<T extends string> {
     return this._data[label];
   }
 
-  has(label: string) {
+  has(label: string): label is T {
     // @ts-ignore
     return !!this._data[label];
   }
