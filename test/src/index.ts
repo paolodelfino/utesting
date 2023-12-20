@@ -20,7 +20,7 @@ async function main() {
       },
     });
 
-    for (const test of tests.all) {
+    for (const test of tests.values) {
       assert.isFalse(test.ran);
       assert.isFalse(test.failed);
     }
@@ -34,10 +34,13 @@ async function main() {
       deps: ["foo2"],
     });
 
-    for (const test of tests.all) {
+    for (const test of tests.values) {
       assert.isTrue(test.ran);
       assert.isFalse(test.failed);
     }
+
+    assert.strictEqual(tests.keys[0], "foo");
+    assert.strictEqual(tests.keys[1], "foo2");
   }
 
   {
@@ -88,7 +91,7 @@ async function main() {
         console.log(err);
       });
 
-    for (const test of tests.all) {
+    for (const test of tests.values) {
       assert.isFalse(test.ran, test.label);
       assert.isFalse(test.failed, test.label);
     }
