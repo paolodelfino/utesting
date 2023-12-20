@@ -1,11 +1,10 @@
 export interface Options {
   dependencies: string[];
+  after: () => Promise<void>;
 }
 
-export interface Test {
+export type Test = Partial<Options> & {
   cb: () => Promise<void>;
-  dependencies?: string[];
-  after?: () => Promise<void>;
   ran: boolean;
   failed: boolean;
-}
+};
