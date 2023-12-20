@@ -39,10 +39,25 @@ async function main() {
     );
   } catch {}
 
-  tests.add("Test3", async () => {
-    await time(1287);
-    console.log("Test3 task");
-  });
+  tests.add(
+    "Test3",
+    async () => {
+      await time(1287);
+      console.log("Test3 task");
+    },
+    {
+      async after() {
+        console.log("Test3 after log");
+        await time(1500);
+
+        tests.add("Test3 After Task", async () => {
+          console.log("Test3 after task log");
+          await time(3500);
+        });
+        await tests.run("Test3 After Task");
+      },
+    }
+  );
 
   await tests.run("Test2").catch(() => {});
   assert.isTrue(
