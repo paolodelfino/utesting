@@ -73,6 +73,11 @@ export class UTesting {
     const elapsed = Number(process.hrtime.bigint() - sw_start) / 1e6;
     test.ran = true;
 
+    await test.after?.().catch((err) => {
+      test.failed = true;
+      console.log(err);
+    });
+
     loading.stop();
     console.log = old_console_log;
 
