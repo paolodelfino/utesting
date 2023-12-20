@@ -5,6 +5,14 @@ import { Options, Test } from "./types";
 export class UTesting {
   private _tests: Record<string, Test> = {};
 
+  get length() {
+    return Object.keys(this._tests).length;
+  }
+
+  get names() {
+    return Object.keys(this._tests);
+  }
+
   add(label: string, cb: Test["cb"], options?: Partial<Options>) {
     if (options?.dependencies) {
       for (const dep of options.dependencies) {
@@ -24,7 +32,7 @@ export class UTesting {
     };
   }
 
-  get(label: string) {
+  get(label: string): Test | undefined {
     return this._tests[label];
   }
 
