@@ -68,6 +68,9 @@ async function main() {
   await tests.run();
   await tests.run("Test2");
   await tests.run("Test3");
+
+  tests.add("ms", async () => {});
+  tests.run("ms");
 }
 
 main();

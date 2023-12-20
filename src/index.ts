@@ -70,7 +70,7 @@ export class UTesting {
       test.failed = true;
       console.log(err);
     });
-    const elapsed = Number(process.hrtime.bigint() - sw_start) / 1e6;
+    const elapsed_ms = Number(process.hrtime.bigint() - sw_start) / 1e6;
     test.ran = true;
 
     if (!test.failed) {
@@ -92,7 +92,9 @@ export class UTesting {
     } else {
       console.log(
         `${chalk.bgHex("#008000").bold(`  ${label}  `)} ${chalk.dim(
-          `${elapsed}ms`
+          elapsed_ms >= 1000
+            ? `${(elapsed_ms / 1000).toFixed(2)}s`
+            : `${elapsed_ms}ms`
         )}`
       );
     }
