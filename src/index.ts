@@ -136,7 +136,7 @@ class Test<T extends string> {
           spinner.stop();
           old_console_log(
             `${chalk.bgHex("#FFA500").bold(`  ${this.label}  `)} ${chalk.dim(
-              `Skipped because a dependency has failed: ${dep.label}`
+              `Skipped because a dependency has failed: "${dep.label}"`
             )}`
           );
           return;
