@@ -183,7 +183,11 @@ class Test<T extends string> {
     } else {
       console.log(
         `${chalk.bgHex("#FF0000").bold(`  ${this.label}  `)} ${chalk.dim(
-          `Task has failed`
+          `Task has failed (${
+            elapsed_ms >= 1000
+              ? `${(elapsed_ms / 1000).toFixed(2)}s`
+              : `${elapsed_ms}ms`
+          })`
         )}`
       );
     }
