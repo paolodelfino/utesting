@@ -126,7 +126,9 @@ class Test<T extends string> {
           spinner.stop();
 
           throw new Error(
-            `cannot run "${this.label}" before its dependency "${dep.label}" (error hierarchy found: ${hierarchy})`
+            `cannot run "${this.label}" before its dependency "${
+              dep.label
+            }" (error hierarchy found: ${hierarchy.reverse()})`
           );
         }
 
